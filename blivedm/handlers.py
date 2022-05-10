@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import http
 import logging
 from typing import *
 
-from . import client as client_
+from config import config
+from . import client as client_, face_getter
 from . import models
 
 __all__ = (
@@ -36,6 +38,7 @@ IGNORED_CMDS = (
     'STOP_LIVE_ROOM_LIST',
     'SUPER_CHAT_MESSAGE_JPN',
     'WIDGET_BANNER',
+    'WATCHED_CHANGE'
 )
 
 # 已打日志的未知cmd
@@ -61,6 +64,14 @@ class BaseHandler(HandlerInterface):
 
     def __danmu_msg_callback(self, client: client_.BLiveClient, command: dict):
         return self._on_danmaku(client, models.DanmakuMessage.from_command(command['info']))
+
+    def __interact_word_callback(self, client: client_.BLiveClient, command: dict):
+        uid = command['data']['uid']
+        if config.OPEN_FACE:
+            face = face_getter.get_user_face(uid)
+            print("user face :", face)
+
+        return self._on_interact_word(client, command['data'])
 
     def __send_gift_callback(self, client: client_.BLiveClient, command: dict):
         return self._on_gift(client, models.GiftMessage.from_command(command['data']))
@@ -88,7 +99,7 @@ class BaseHandler(HandlerInterface):
         # go-common\app\service\live\live-dm\service\v1\send.go
         'DANMU_MSG': __danmu_msg_callback,
         # 有人入场/
-        'INTERACT_WORD': __heartbeat_callback,
+        'INTERACT_WORD': __interact_word_callback,
         # 有人送礼
         'SEND_GIFT': __send_gift_callback,
         # 有人上舰
@@ -104,7 +115,7 @@ class BaseHandler(HandlerInterface):
     del cmd
 
     async def handle(self, client: client_.BLiveClient, command: dict):
-        print(command)
+        # print(command)
 
         cmd = command.get('cmd', '')
         pos = cmd.find(':')  # 2019-5-29 B站弹幕升级新增了参数
@@ -130,6 +141,13 @@ class BaseHandler(HandlerInterface):
     async def _on_danmaku(self, client: client_.BLiveClient, message: models.DanmakuMessage):
         """
         收到弹幕
+        """
+
+    async def _on_interact_word(self, client: client_.BLiveClient, message: dict):
+
+        print("新观众：", message['uid'], " , ", message['uname'])
+        """
+        观众进入
         """
 
     async def _on_gift(self, client: client_.BLiveClient, message: models.GiftMessage):
