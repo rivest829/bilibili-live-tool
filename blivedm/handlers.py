@@ -18,7 +18,6 @@ IGNORED_CMDS = (
     'ENTRY_EFFECT',
     'HOT_RANK_CHANGED',
     'HOT_RANK_CHANGED_V2',
-    'INTERACT_WORD',
     'LIVE',
     'LIVE_INTERACTIVE_GAME',
     'NOTICE_MSG',
@@ -88,6 +87,8 @@ class BaseHandler(HandlerInterface):
         # 收到弹幕
         # go-common\app\service\live\live-dm\service\v1\send.go
         'DANMU_MSG': __danmu_msg_callback,
+        # 有人入场/
+        'INTERACT_WORD': __heartbeat_callback,
         # 有人送礼
         'SEND_GIFT': __send_gift_callback,
         # 有人上舰
@@ -103,6 +104,8 @@ class BaseHandler(HandlerInterface):
     del cmd
 
     async def handle(self, client: client_.BLiveClient, command: dict):
+        print(command)
+
         cmd = command.get('cmd', '')
         pos = cmd.find(':')  # 2019-5-29 B站弹幕升级新增了参数
         if pos != -1:
